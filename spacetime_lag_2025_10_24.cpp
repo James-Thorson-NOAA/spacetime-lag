@@ -209,5 +209,9 @@ Type objective_function<Type>::operator() ()
 //  REPORT( b_t );
 //  ADREPORT( b_t );
 
+  SIMULATE {
+    REPORT(b_i);
+  }
+
   return jnll;
 }
