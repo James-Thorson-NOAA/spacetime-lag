@@ -18,19 +18,23 @@ old_obj <- readRDS("2025-10-28_cutoff=40_noprof/capelin/1-111/obj.RDS")
 pl <- old_obj$env$parList()
 random <- c("omega_s", "epsilon_st")
 
-obj <- MakeADFun(
-  data = tmb_dat,
-  parameters = old_obj$env$parList(),
-  random = c("omega_s", "epsilon_st"),
-  map = list(),
-  profile = NULL,
-  silent = TRUE,
-  DLL = version
-)
-obj$env$last.par.best <- old_obj$env$last.par.best
+reload_obj <- function(old_obj) {
+  obj <- MakeADFun(
+    data = tmb_dat,
+    parameters = old_obj$env$parList(),
+    random = c("omega_s", "epsilon_st"),
+    map = list(),
+    profile = NULL,
+    silent = TRUE,
+    DLL = version
+  )
+  obj$env$last.par.best <- old_obj$env$last.par.best
+  # Evaluate objective once for MC() to work
+  obj$fn(obj$env$last.par.best)
+  obj
+}
 
-# Evaluate objective once for MC() to work
-obj$fn(obj$env$last.par.best)
+obj <- reload_obj(old_obj)
 
 one_sample_posterior <- function(object) {
   # take a sample from the random effects (as MVN) with fixed effects held at MLEs
@@ -57,7 +61,14 @@ get_fe <- function(object) {
 
 set.seed(123)
 
-do_one_sim <- function(obj, tmb_dat, iter, seed) {
+do_one_sim <- function(obj, tmb_dat, iter, seed, is_parallel = FALSE) {
+
+  # if running in parallel, will need to run this on each iteration
+  if (is_parallel) {
+    dyn.load(dynlib(version))
+    obj <- reload_obj(obj)
+  }
+  # otherwise, can skip for speed
 
   set.seed(seed)
   p <- one_sample_posterior(obj)
@@ -112,11 +123,21 @@ do_one_sim <- function(obj, tmb_dat, iter, seed) {
 set.seed(123)
 seeds <- sample(seq_len(1e5L), size = 500L)
 
-out <- purrr::map_df(
-  seq_len(2), \(i)
-  do_one_sim(obj, tmb_dat, seed = seeds[i], iter = i)
-)
+# out <- purrr::map_dfr(
+#   seq_len(2), \(i)
+#   do_one_sim(obj, tmb_dat, seed = seeds[i], iter = i)
+# )
+
 # swap out for furrr once happy?
+# OK, this gets complicated; gets crashy
+# You have to MakeADFun each time on the obj first
+# see my notes in the function above
+future::plan(future::multisession)
+out <- furrr::future_map_dfr(
+  seq_len(10L), \(i)
+  do_one_sim(obj, tmb_dat, seed = seeds[i], iter = i, is_parallel = TRUE),
+  .options = furrr::furrr_options(seed = TRUE)
+)
 
 ggplot(out, aes(par_hat, iter)) +
   geom_point() +
