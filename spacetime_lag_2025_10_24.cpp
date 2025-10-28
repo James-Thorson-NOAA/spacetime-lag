@@ -103,7 +103,7 @@ Type objective_function<Type>::operator() ()
   if( kappaST.size() > 0 ){
     P_k2k2 = P_k2k2 + kappaST(0) * exp(-2 * log_kappaS(0) ) * kronecker( M_tt, P_s2s2 );
   }
-  
+
   // Solve and repack
   Eigen::SparseMatrix<Type> IminusP_k2k2( n_s2*n_t, n_s2*n_t );
   IminusP_k2k2 = I_k2k2 - P_k2k2;
@@ -151,6 +151,7 @@ Type objective_function<Type>::operator() ()
     //if( !isNA(b_i(i)) ){
     bhat_i(i) = a_i(i) * exp( p_i(i) );
     jnll_comp(0) -= dtweedie( b_i(i), bhat_i(i), exp(ln_phi), Type(1.0)+invlogit(finv_power), true );
+    SIMULATE{b_i(i) = rtweedie(bhat_i(i), exp(ln_phi), 1.0 + invlogit(finv_power));}
     //}
   }
 
