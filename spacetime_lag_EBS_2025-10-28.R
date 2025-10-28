@@ -287,6 +287,7 @@ for (si in seq_along(species_set)) {
         saveRDS(opt, file = file.path(run_dir, "opt.RDS"))
         saveRDS(rep, file = file.path(run_dir, "rep.RDS"))
         saveRDS(obj, file = file.path(run_dir, "obj.RDS"))
+        saveRDS(data, file = file.path(run_dir, "tmbdata.RDS"))
         saveRDS(parhat, file = file.path(run_dir, "parhat.RDS"))
       }
     }
