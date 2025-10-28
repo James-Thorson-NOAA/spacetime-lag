@@ -208,7 +208,8 @@ for (si in seq_along(species_set)) {
         invM0_ss = solve(spde$c0),
         M1_s2s2 = spde2$g1,
         invM0_s2s2 = solve(spde2$c0),
-        M_tt = M_tt
+        M_tt = M_tt,
+        sim_gmrf = 0
       )
       par <- list(
         log_kappaS = log_kappaS_start,

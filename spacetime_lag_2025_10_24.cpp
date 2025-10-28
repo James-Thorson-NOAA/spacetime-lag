@@ -51,6 +51,7 @@ Type objective_function<Type>::operator() ()
   PARAMETER( ln_phi );
   PARAMETER( logit_rhoE );
   PARAMETER( finv_power );
+  DATA_INTEGER(sim_gmrf); // simulate GMRFs?
 
   // Random effects
   PARAMETER_VECTOR( omega_s );
@@ -81,11 +82,27 @@ Type objective_function<Type>::operator() ()
   // Probability of random effects
   Eigen::SparseMatrix<Type> Q_ss = exp(4*ln_kappa)*M0_ss + Type(2.0)*exp(2*ln_kappa)*M1_ss + M2_ss;
   jnll_comp(1) += SCALE( GMRF(Q_ss), 1/exp(ln_tauO) )( omega_s );
+  if ( sim_gmrf ) SIMULATE {
+    vector<Type> tmp(omega_s.size());
+    GMRF(Q_ss).simulate( tmp );
+    omega_s = tmp / exp(ln_tauO);
+  }
   for( int t=0; t<n_t; t++ ){
     if( t==0 ){
       jnll_comp(2) += SCALE( GMRF(Q_ss), 1 / exp(ln_tauE) / pow( 1.0-pow(rhoE,2), 0.5 ) )( epsilon_st.col(t) );
+      if ( sim_gmrf ) SIMULATE {
+        vector<Type> tmp(epsilon_st.rows());
+        GMRF(Q_ss).simulate( tmp );
+        epsilon_st.col(t) = tmp / exp(ln_tauE) / pow( 1.0-pow(rhoE,2), 0.5 );
+      }
     }else{
       jnll_comp(2) += SCALE( GMRF(Q_ss), 1 / exp(ln_tauE) )( epsilon_st.col(t) - rhoE*epsilon_st.col(t-1) );
+      if ( sim_gmrf ) SIMULATE {
+        vector<Type> tmp(epsilon_st.rows());
+        GMRF(Q_ss).simulate( tmp );
+        tmp = tmp / exp(ln_tauE) + rhoE * vector<Type>(epsilon_st.col(t-1));
+        epsilon_st.col(t) = tmp;
+      }
     }
   }
 
@@ -182,7 +199,7 @@ Type objective_function<Type>::operator() ()
   }
   if( log_kappaS.size() > 0 ){
     Type MSD;
-    if( (options_z(0) == 1) & (kappaT.size() > 0) ){
+    if( (options_z(0) == 1) && (kappaT.size() > 0) ){
       MSD = 4 / exp( 2.0 * log_kappaS(0) ) * (1 - rhoT);
     }else{
       MSD = 4 / exp( 2.0 * log_kappaS(0) );

@@ -18,7 +18,9 @@ old_obj <- readRDS("2025-10-28_cutoff=40_noprof/capelin/1-111/obj.RDS")
 pl <- old_obj$env$parList()
 random <- c("omega_s", "epsilon_st")
 
+# reloads object, but also turns on random field simulation:
 reload_obj <- function(old_obj) {
+  tmb_dat$sim_gmrf <- 1L #< !!
   obj <- MakeADFun(
     data = tmb_dat,
     parameters = old_obj$env$parList(),
@@ -29,7 +31,7 @@ reload_obj <- function(old_obj) {
     DLL = version
   )
   obj$env$last.par.best <- old_obj$env$last.par.best
-  # Evaluate objective once for MC() to work
+  # Evaluate objective once for MC(), etc. to work
   obj$fn(obj$env$last.par.best)
   obj
 }
@@ -63,17 +65,19 @@ set.seed(123)
 
 do_one_sim <- function(obj, tmb_dat, iter, seed, is_parallel = FALSE) {
 
-  # if running in parallel, will need to run this on each iteration
+  # if running with multisession (but not multicore probably?), will need to run this on each iteration
   if (is_parallel) {
     dyn.load(dynlib(version))
-    obj <- reload_obj(obj)
+    # obj <- reload_obj(obj) # probably not needed - but turn on if needed
   }
   # otherwise, can skip for speed
 
   set.seed(seed)
-  p <- one_sample_posterior(obj)
-  sim <- obj$simulate(par = p)
-  # sim <- obj$simulate() # EB random effects
+  # p <- one_sample_posterior(obj)
+  # sim <- obj$simulate(par = p)
+
+  # note that sim_gmrf was already turned on during the MakeADFun above
+  sim <- obj$simulate() # EB random effects
 
   # now fit back to the simulated data:
   tmb_dat$b_i <- sim$b_i
@@ -129,12 +133,9 @@ seeds <- sample(seq_len(1e5L), size = 500L)
 # )
 
 # swap out for furrr once happy?
-# OK, this gets complicated; gets crashy
-# You have to MakeADFun each time on the obj first
-# see my notes in the function above
 future::plan(future::multisession)
 out <- furrr::future_map_dfr(
-  seq_len(10L), \(i)
+  seq_len(5L), \(i)
   do_one_sim(obj, tmb_dat, seed = seeds[i], iter = i, is_parallel = TRUE),
   .options = furrr::furrr_options(seed = TRUE)
 )
@@ -142,4 +143,8 @@ out <- furrr::future_map_dfr(
 ggplot(out, aes(par_hat, iter)) +
   geom_point() +
   geom_vline(aes(xintercept = par_true), lty = 2) +
-  facet_wrap(vars(par_name), scales = "free_x")
+  facet_wrap(vars(par_name), scales = "free_x") +
+  ggsidekick::theme_sleek()
+
+dir.create("figs", showWarnings = FALSE)
+ggsave("figs/example-sim-capelin.png", width = 6, height = 6)
