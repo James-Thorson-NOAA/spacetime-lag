@@ -14,10 +14,6 @@ dat <- readRDS("2025-10-28_cutoff=40_noprof/capelin/data_sf.RDS")
 tmb_dat <- readRDS("2025-10-28_cutoff=40_noprof/capelin/1-111/tmbdata.RDS")
 old_obj <- readRDS("2025-10-28_cutoff=40_noprof/capelin/1-111/obj.RDS")
 
-# Recreate the TMB object with the loaded DLL to avoid crashing sometimes on MC()
-pl <- old_obj$env$parList()
-random <- c("omega_s", "epsilon_st")
-
 # reloads object, but also turns on random field simulation:
 reload_obj <- function(old_obj) {
   tmb_dat$sim_gmrf <- 1L #< !!
@@ -77,7 +73,7 @@ do_one_sim <- function(obj, tmb_dat, iter, seed, is_parallel = FALSE) {
   # sim <- obj$simulate(par = p)
 
   # note that sim_gmrf was already turned on during the MakeADFun above
-  sim <- obj$simulate() # EB random effects
+  sim <- obj$simulate()
 
   # now fit back to the simulated data:
   tmb_dat$b_i <- sim$b_i
