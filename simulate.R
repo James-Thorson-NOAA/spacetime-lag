@@ -10,9 +10,27 @@ setwd(root_dir)
 compile(paste0(version, ".cpp"), framework = "TMBad")
 dyn.load(dynlib(version))
 
-obj <- readRDS("2025-10-28_cutoff=40_noprof/capelin/1-111/obj.RDS")
 dat <- readRDS("2025-10-28_cutoff=40_noprof/capelin/data_sf.RDS")
 tmb_dat <- readRDS("2025-10-28_cutoff=40_noprof/capelin/1-111/tmbdata.RDS")
+old_obj <- readRDS("2025-10-28_cutoff=40_noprof/capelin/1-111/obj.RDS")
+
+# Recreate the TMB object with the loaded DLL to avoid crashing sometimes on MC()
+pl <- old_obj$env$parList()
+random <- c("omega_s", "epsilon_st")
+
+obj <- MakeADFun(
+  data = tmb_dat,
+  parameters = old_obj$env$parList(),
+  random = c("omega_s", "epsilon_st"),
+  map = list(),
+  profile = NULL,
+  silent = TRUE,
+  DLL = version
+)
+obj$env$last.par.best <- old_obj$env$last.par.best
+
+# Evaluate objective once for MC() to work
+obj$fn(obj$env$last.par.best)
 
 one_sample_posterior <- function(object) {
   # take a sample from the random effects (as MVN) with fixed effects held at MLEs
@@ -39,28 +57,12 @@ get_fe <- function(object) {
 
 set.seed(123)
 
-# sdr <- sdreport(
-#   obj
-#   # getReportCovariance = TRUE, # must be TRUE to get Cov for `gamma_j` if its included in profile
-#   # skip.delta.method = FALSE, # must be FALSE to get as.list( opt$SD, what = "Std. Error", report = TRUE )
-#   # ignore.parm.uncertainty = FALSE # must be FALSE to include fixed effect uncertainty
-# )
-
-# obj$env$MC() is crashy sometimes!?
-# new_par <- one_sample_posterior(obj)
-# sim <- obj$simulate(par = new_par)
-
-# mean(sim$b_i)
-# mean(dat$catch_weight)
-# max(sim$b_i)
-# max(dat$catch_weight)
-
-# if crashing, for now use EB random effects, i.e. obj$simulate()
-
 do_one_sim <- function(obj, tmb_dat, iter, seed) {
 
   set.seed(seed)
-  sim <- obj$simulate()
+  p <- one_sample_posterior(obj)
+  sim <- obj$simulate(par = p)
+  # sim <- obj$simulate() # EB random effects
 
   # now fit back to the simulated data:
   tmb_dat$b_i <- sim$b_i
@@ -85,8 +87,7 @@ do_one_sim <- function(obj, tmb_dat, iter, seed) {
     control = list(trace = 1L, eval.max = 1e4L, iter.max = 1e4L)
   ))
 
-
-  # do we want CI coverage? If so, we'll need to run the sdreport()
+  # do we want CI coverage? If so, we'll need to run the sdreport(), much slower
   # sd_sim <- sdreport(
   #   obj_sim,
   #   getReportCovariance = TRUE, # must be TRUE to get Cov for `gamma_j` if its included in profile
@@ -111,6 +112,13 @@ do_one_sim <- function(obj, tmb_dat, iter, seed) {
 set.seed(123)
 seeds <- sample(seq_len(1e5L), size = 500L)
 
-out <- purrr::map_df(seq_len(2), \(i) do_one_sim(obj, tmb_dat, seed = seeds[i], iter = i))
+out <- purrr::map_df(
+  seq_len(2), \(i)
+  do_one_sim(obj, tmb_dat, seed = seeds[i], iter = i)
+)
+# swap out for furrr once happy?
 
-ggplot(out, aes())
+ggplot(out, aes(par_hat, iter)) +
+  geom_point() +
+  geom_vline(aes(xintercept = par_true), lty = 2) +
+  facet_wrap(vars(par_name), scales = "free_x")
