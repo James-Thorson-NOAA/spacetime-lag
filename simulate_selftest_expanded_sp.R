@@ -30,7 +30,7 @@ species_list <- c("capelin", "pacific cod", "pacific halibut")
 n_sim <- 250
 
 # load Sean's functions
-reload_obj <- function(old_obj, tmb_dat) { # ML: add tmb_dat here because we don't load it upfront since we have more species now
+reload_obj <- function(old_obj, tmb_dat) {
   tmb_dat$sim_gmrf <- 1L #< !!
   obj <- MakeADFun(
     data = tmb_dat,
@@ -104,7 +104,8 @@ run_species_sim <- function(species, version, n_sim, seeds) {
   # need to load here again
   dyn.load(dynlib(version))
   
-  # build file paths for the species data
+  # build file paths for the species dat
+  # FIXME note diffusion is used here
   base_dir <- file.path(root_dir, "2025-10-28_cutoff=40_noprof", species)
   data_path <- file.path(base_dir, "data_sf.RDS")
   tmb_path  <- file.path(base_dir, "1-111", "tmbdata.RDS")

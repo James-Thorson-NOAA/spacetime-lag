@@ -12,8 +12,6 @@
 
 # 3. future_map2(): loops over species_list in parallel (via furrr) and calls run_species_sim() for each species.
 
-# FIXME: file paths suggest cutoff = 40, but it was actually 60 when fitted because the path was hardcoded
-
 library(TMB)
 library(tidyr)
 library(dplyr)
@@ -38,8 +36,8 @@ dyn.load(dynlib(version))
 species_list <- c("capelin", "pacific cod", "pacific halibut")
 
 # number of simulation replicates per species. 
-# 200 sims takes ~8h
-n_sim <- 200
+# 200 sims takes ~8h with cutoff 60
+n_sim <- 100
 
 # define the model configurations
 config_list <- list(
@@ -52,7 +50,8 @@ config_set <- expand.grid(config_list)
 config_set <- config_set[which(config_set$space == 1 | config_set$diffusion == 0), ]
 
 # load the full parameter template in the global (use capelin but they are all the same)
-base_dir <- file.path(root_dir, "2025-10-28_cutoff=40_noprof", "capelin")
+#base_dir <- file.path(root_dir, "2025-11-09", "capelin")
+base_dir <- file.path(root_dir, "2025-11-09", "capelin")
 obj_path_full <- file.path(base_dir, "1-110", "obj.RDS")
 full_obj <- readRDS(obj_path_full)
 par_template <- full_obj$env$parList() 
@@ -179,9 +178,8 @@ run_species_sim <- function(species, version, n_sim, seeds, config_set) {
   dyn.load(dynlib(version))
   
   # build file paths for the species data
-  base_dir <- file.path(root_dir, "2025-10-28_cutoff=40_noprof", species)
-  data_path <- file.path(base_dir, "data_sf.RDS")
-  
+  base_dir <- file.path(root_dir, "2025-11-09", species)
+
   # load AIC selected model for each species do use in the simulation part of do_one_sim
   # config codes are: type <- paste0(do_quadratic, "-", do_space, do_time, do_diffusion)
   if (species == "capelin"){
@@ -243,85 +241,4 @@ names(all_results) <- species_list
 res_df <- bind_rows(all_results)
 
 # save!
-write_csv(res_df, file = file.path(root_dir, paste0("2025-10-28_cutoff=40_noprof/simulation_selfcross_out_", n_sim, "_reps.csv")))
-
-# plot
-res_df <- read_csv(file.path(root_dir, paste0("2025-10-28_cutoff=40_noprof/simulation_selfcross_out_", n_sim, "_reps.csv")))
-
-# specify true model for each species
-correct_models <- tibble(
-  species = c("capelin", "pacific cod", "pacific halibut"),
-  correct_type = c("space+time", "base", "time")
-)
-
-res_df |> 
-  distinct(AIC, type, iter, species) |> 
-  mutate(type = case_when(
-    type == "1-000" ~ "base",
-    type == "1-100" ~ "space",
-    type == "1-010" ~ "time",
-    type == "1-110" ~ "space+time",
-    TRUE ~ type
-  )) |>
-  mutate(delta_AIC = AIC - min(AIC), .by = c(iter, species)) |> 
-  summarise(fraction_best = mean(delta_AIC == 0), .by = c(type, species)) |>
-  left_join(correct_models, by = "species") |>
-  mutate(true_model = type == correct_type) |>
-  ggplot(aes(fraction_best, type, fill = true_model)) +
-  facet_wrap(~str_to_sentence(species), ncol = 3) +
-  theme(legend.position = "bottom") +
-  geom_col(width = 0.9) +
-  labs(
-    y = "Model",
-    x = "Fraction of iterations with best AIC"
-  ) +
-  scale_fill_brewer(palette = "Set2", name = "Operating model",
-                    direction = -1)
-
-ggsave(paste0(root_dir, "/figs/self_test_aic.png"), width = 20, height = 8, unit = "cm")
-
-
-# Now compare how well the full and the AIC model can recover kappaS and kappaT (for halibut and capelin)
-res_df |> 
-  filter(par_name %in% c("log_kappaS", "kappaT")) |> 
-  filter(species %in% c("capelin", "pacific halibut")) |> 
-  drop_na(par_true) |> 
-  mutate(type = case_when(
-    type == "1-000" ~ "base",
-    type == "1-100" ~ "space",
-    type == "1-010" ~ "time",
-    type == "1-110" ~ "space+time",
-    TRUE ~ type
-  )) |>
-  mutate(par_label_parsed = case_when(
-    par_name == "kappaT" ~ "kappa[T]",
-    par_name == "log_kappaS" ~ "log(kappa[S])",
-    TRUE ~ par_name
-  ),
-  species_label = str_to_sentence(species)) |>
-  left_join(correct_models, by = "species") |>
-  mutate(true_model = type == correct_type) |>
-  ggplot(aes(type, par_hat, color = true_model)) +
-  geom_hline(aes(yintercept = par_true), linetype = 2, color = "tomato") +
-  geom_quasirandom(alpha = 0.175, size = 1) +
-  geom_boxplot(fill = NA, width = 0.1, size = 0.4, alpha = 1,
-               outlier.shape = NA, color = "gray30") +
-  geom_text(data = . %>% distinct(species_label, par_label_parsed),
-            aes(label = par_label_parsed, x = -Inf, y = Inf),
-            hjust = -0.1, vjust = 1.2, size = 4, color = "gray30", 
-            parse = TRUE) +
-  geom_text(data = . %>% distinct(species_label, par_label_parsed),
-            aes(label = species_label, x = Inf, y = Inf),
-            hjust = 1.1, vjust = 1.2, size = 4, color = "gray30") +
-  facet_wrap(~ species_label+par_label_parsed, 
-             scales = "free", 
-             ncol = 3) +
-  labs(y = "Estimated value",
-       x = "Estimation model") +
-  scale_color_brewer(palette = "Set2", name = "AIC-selected model",
-                     direction = -1) + 
-  theme(legend.position = "bottom",
-        strip.text.x = element_blank()) +
-  guides(color = guide_legend(override.aes = list(alpha = 0.9)))
-
-ggsave(paste0(root_dir, "/figs/kappa_recovery.png"), width = 20, height = 10, unit = "cm")
+write_csv(res_df, file = file.path(root_dir, paste0("2025-11-09/simulation_selfcross_out_", n_sim, "_reps.csv")))
