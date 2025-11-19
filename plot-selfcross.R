@@ -49,11 +49,31 @@ res_df |>
 ggsave(paste0(root_dir, "/figs/self_test_aic.png"), width = 20, height = 8, unit = "cm")
 
 
-# Same plot but add AR(1) [rho_E] and RMSD (from log_kappaS)
+# Now wrangle the data a lot for plotting...
 pdat <- res_df |> 
+  # keep logit rhoE for now...
   filter(par_name %in% c("log_kappaS", "kappaT", "logit_rhoE", "RMSD")) |> 
   filter(species %in% c("capelin", "pacific halibut")) |> 
-  drop_na(par_true) |> 
+  drop_na(par_true) |>
+  dplyr::select(-seed, -AIC) |> 
+  # make wide so I can calculate AR1 and RMSD
+  pivot_wider(names_from = "par_name", values_from = c("par_true", "par_hat")) |> 
+  mutate(`par_true_AR(1)` = par_true_kappaT / (par_true_kappaT + 1),
+         `par_hat_AR(1)` = par_hat_kappaT / (par_hat_kappaT + 1),
+         par_true_RMSD = sqrt(4 * exp(-2 * par_true_log_kappaS) * (1 - par_true_kappaT / (1 + par_true_kappaT))),
+         par_hat_RMSD = sqrt(4 * exp(-2 * par_hat_log_kappaS) * (1 - par_hat_kappaT / (1 + par_hat_kappaT)))) |> 
+  # make long again for plotting easily
+  pivot_longer(c("par_true_logit_rhoE", "par_true_log_kappaS", "par_true_kappaT",
+                 "par_hat_logit_rhoE", "par_hat_log_kappaS", "par_hat_kappaT",
+                 "par_true_AR(1)", "par_hat_AR(1)", "par_true_RMSD", "par_hat_RMSD"),
+               names_to = "par_name") |> 
+  drop_na(value) |> 
+  # clean up the par names and split true vs estimated
+  mutate(
+    type_of_par = if_else(str_detect(par_name, "^par_true"), "par_true", "par_hat"),
+    par_name = str_replace(par_name, "^par_(true|hat)_", "")
+  ) |> 
+  # rename the model types
   mutate(type = case_when(
     type == "1-000" ~ "base",
     type == "1-100" ~ "space",
@@ -61,74 +81,57 @@ pdat <- res_df |>
     type == "1-110" ~ "space+time",
     TRUE ~ type
   )) |>
+  # nice labels for plottings
   mutate(par_label_parsed = case_when(
     par_name == "kappaT" ~ "kappa[T]",
     par_name == "log_kappaS" ~ "log(kappa[S])",
-    par_name == "logit_rhoE" ~ "rho[E]",
-    TRUE ~ par_name
-  ),
-  species_label = str_to_sentence(species)) |>
+    TRUE ~ par_name),
+    species_label = str_to_sentence(species)) |>
+  # left join the AIC selected (OMs)
   left_join(correct_models, by = "species") |>
-  mutate(true_model = type == correct_type,
-         par_hat = ifelse(par_name == "logit_rhoE",
-                          2 * plogis(par_hat) - 1,
-                          par_hat),
-         par_true = ifelse(par_name == "logit_rhoE",
-                           2 * plogis(par_true) - 1,
-                           par_true))
+  mutate(true_model = type == correct_type) |> 
+  # filter the params we work with
+  tidylog::filter(par_name %in% c("log_kappaS", "kappaT", "AR(1)", "RMSD"))
 
-#mutate(RMSD = (4 / exp( 2.0 * log_kappaS))^2) |> 
-RMSD <- res_df |> 
-  filter(par_name == "log_kappaS") |> 
-  filter(species %in% c("capelin", "pacific halibut")) |> 
-  mutate(par_hat = sqrt(4 / exp( 2.0 * par_hat)),
-         par_true = sqrt(4 / exp( 2.0 * par_true)),
-         par_name = "RMSD") |> 
-  drop_na(par_true) |> 
-  mutate(type = case_when(
-    type == "1-000" ~ "base",
-    type == "1-100" ~ "space",
-    type == "1-010" ~ "time",
-    type == "1-110" ~ "space+time",
-    TRUE ~ type
-  )) |>
-  mutate(par_label_parsed = case_when(
-    par_name == "RMSD" ~ "RMSD",
-    TRUE ~ par_name
-  ),
-  species_label = str_to_sentence(species)) |>
-  left_join(correct_models, by = "species") |>
-  mutate(true_model = type == correct_type)
-
-# Now add in RMSD
-pdat2 <- pdat |>
-  bind_rows(RMSD)
-
-pdat2 <- pdat2 |> 
+# Filter true values (for horizontal lines)
+pdattrue <- pdat |> 
+  filter(type_of_par == "par_true") |> 
+  distinct(value, par_label_parsed, species_label, type) |> 
   mutate(par_label_parsed =
            factor(par_label_parsed, 
-                  levels = c("log(kappa[S])", "kappa[T]", "rho[E]", "RMSD"))) |>
-  mutate(true_model = ifelse(true_model == TRUE, "AIC-selected", "Not AIC-selected")) |> 
-  mutate(
-    rmsd_value = ifelse(any(par_name == "RMSD"), 
-                        par_hat[par_name == "RMSD"][1], 
-                        NA_real_),
-    log_kappaS_value = ifelse(any(par_name == "log_kappaS"), 
-                              par_hat[par_name == "log_kappaS"][1], 
-                              NA_real_),
-    .by = c(species, type, iter, seed)
-  ) |>
-  mutate(shape_value = ifelse(rmsd_value < 1 & par_name %in% c("log_kappaS", "RMSD"),
-                              "RMSD<1", "RMSD>1"))
+                  levels = c("log(kappa[S])", "kappa[T]", "AR(1)", "RMSD")))
 
-p1 <- pdat2 |> 
-  ggplot(aes(type, par_hat)) +
+# Filter estimated parameters
+pdathat <- pdat |> 
+  filter(type_of_par == "par_hat") |> 
+  mutate(par_label_parsed =
+           factor(par_label_parsed, 
+                  levels = c("log(kappa[S])", "kappa[T]", "AR(1)", "RMSD"))) |>
+  mutate(true_model = ifelse(true_model == TRUE, "AIC-selected", "Not AIC-selected")) 
+
+# Add in rmsd (for making different symbols)
+rmsd <- pdathat |> 
+  # FIXME: should I filter space+time here? How can we calculate RMSD from the space only?
+  filter(par_name == "RMSD" & type == "space+time") |> 
+  dplyr::select(iter, type, species, value) |> 
+  rename(RMSD = value)
+
+# Join the rmsd to the main par df
+pdathat <- pdathat |> 
+  tidylog::left_join(rmsd, by = c("iter", "type", "species")) |> 
+  mutate(shape_value = ifelse(RMSD < 1 & par_name %in% c("log_kappaS", "RMSD"),
+                              "RMSD<1", "RMSD>1"),
+         shape_value = replace_na(shape_value, "RMSD>1"))
+
+# Finally, plot
+p1 <- pdathat |> 
+  ggplot(aes(type, value)) +
   facet_wrap(~ species_label + par_label_parsed, 
              scales = "free", 
              ncol = 3,
              labeller = labeller(par_label_parsed = label_parsed, 
                                  species_label = function(x) "")) +
-  geom_hline(aes(yintercept = par_true), linetype = 2, color = "tomato") +
+  geom_hline(data = pdattrue, aes(yintercept = value), linetype = 2, color = "tomato") +
   geom_quasirandom(aes(fill = true_model, shape = shape_value),
                    alpha = 0.8, size = 1, color = "gray70") +
   scale_shape_manual(values = c(4, 21), name = "") +
