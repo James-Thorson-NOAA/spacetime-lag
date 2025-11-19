@@ -160,6 +160,7 @@ p1 <- pdat2 |>
         legend.key.width = unit(0.8, "cm"),
         legend.key.height = unit(0.2, "cm")) +
   guides(shape = "none",
+         fill = guide_colorbar(title.position = "top", title.hjust = 0.5),
          #shape = guide_legend(ncol = 1, override.aes = list(alpha = 0.9, size = 3)),
          color = guide_legend(ncol = 1, override.aes = list(width = 0)))
 
@@ -202,7 +203,7 @@ ggsave(paste0(root_dir, "/figs/kappa_recovery_logkappa_RMSD.png"),
 
 
 # kappaT + rhoE
-p_other <- pdat_other |> 
+p3 <- pdat_other |> 
   mutate(true_model = ifelse(true_model, "AIC-selected", "Not AIC-selected")) |>
   ggplot(aes(type, par_hat)) +
   facet_wrap(~ species_label + par_label_parsed, 
@@ -210,13 +211,15 @@ p_other <- pdat_other |>
              labeller = labeller(par_label_parsed = label_parsed,
                                  species_label = function(x) "")) +
   geom_hline(aes(yintercept = par_true), linetype = 2, color = "tomato") +
-  geom_quasirandom(aes(shape = true_model, alpha = true_model), size = 0.6, color = "gray10") +
+  geom_quasirandom(aes(shape = true_model), size = 0.6, color = "gray10") +
   geom_boxplot(fill = NA, color = "black", width = 0.15, size = 0.3, outlier.shape = NA) +
   scale_shape_manual(values = c("AIC-selected" = 19, "Not AIC-selected" = 1), name = "") +
   scale_alpha_manual(values = c(0.2, 0.15), name = "") +
   labs(y = "Estimated value", x = "Estimation model") +
   #coord_flip() +
   theme(legend.position = "bottom")
+
+tag_facet(p3, fontface = 1, open = "", close = "", color = "gray20")
 
 ggsave(paste0(root_dir, "/figs/kappa_recovery_kappaT_rhoE.png"),
        width = 17, height = 14, units = "cm")
