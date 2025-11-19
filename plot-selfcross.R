@@ -118,12 +118,8 @@ pdat2 <- pdat2 |>
                               NA_real_),
     .by = c(species, type, iter, seed)
   ) |>
-  ungroup() |>
-  mutate(color_value = case_when(
-    par_name == "log_kappaS" ~ scale(rmsd_value)[,1],
-    par_name == "RMSD" ~ scale(log_kappaS_value)[,1],
-    TRUE ~ NA_real_
-  ))
+  mutate(shape_value = ifelse(rmsd_value < 1 & par_name %in% c("log_kappaS", "RMSD"),
+                              "RMSD<1", "RMSD>1"))
 
 p1 <- pdat2 |> 
   ggplot(aes(type, par_hat)) +
@@ -133,94 +129,21 @@ p1 <- pdat2 |>
              labeller = labeller(par_label_parsed = label_parsed, 
                                  species_label = function(x) "")) +
   geom_hline(aes(yintercept = par_true), linetype = 2, color = "tomato") +
-  geom_quasirandom(data = . %>% filter(is.na(color_value)),
-                   aes(shape = true_model), alpha = 0.3, size = 1.1, color = "gray50") +
-  geom_quasirandom(data = . %>% filter(!is.na(color_value)), color = "gray50", stroke = 0.1,
-                   aes(fill = color_value, shape = true_model), alpha = 1, size = 1.1) +
-  # scale_color_viridis_c(name = expression(log(kappa[S])~or~RMSD (scaled)), 
-  #                       option = "plasma") +
-  scale_fill_gradient2(name = expression(log(kappa[S])~or~RMSD (scaled))) +
-  scale_color_brewer(palette = "Dark2", name = "") +
-  scale_shape_manual(values = c("AIC-selected" = 21, "Not AIC-selected" = 23), name = "") +
-  # geom_boxplot(fill = NA, width = 0.2, size = 0.4,
-  #              outlier.shape = NA, color = "gray20") +
-  geom_boxplot(
-    aes(color = true_model),
-    fill = NA,
-    width = 0.15,
-    size = 0.3,
-    outlier.shape = NA
-  ) +
+  geom_quasirandom(aes(fill = true_model, shape = shape_value),
+                   alpha = 0.8, size = 1, color = "gray70") +
+  scale_shape_manual(values = c(4, 21), name = "") +
+  scale_fill_manual(values = c("gray50", "gray99"), name = "") +
+  geom_boxplot(fill = NA, width = 0.2, size = 0.4,
+               outlier.shape = NA, color = "gray20") +
   geom_text(data = . %>% distinct(species_label, par_label_parsed),
             aes(label = species_label, x = Inf, y = Inf),
-            hjust = 1.1, vjust = 1.2, size = 4, color = "gray30") +
+            hjust = 1.1, vjust = 1.2, size = 3, color = "gray30") +
   labs(y = "Estimated value",
        x = "Estimation model") +
-  theme(legend.position = "bottom",
-        legend.key.width = unit(0.8, "cm"),
-        legend.key.height = unit(0.2, "cm")) +
-  guides(shape = "none",
-         fill = guide_colorbar(title.position = "top", title.hjust = 0.5),
-         #shape = guide_legend(ncol = 1, override.aes = list(alpha = 0.9, size = 3)),
-         color = guide_legend(ncol = 1, override.aes = list(width = 0)))
+  theme(legend.position = "bottom") +
+  guides(fill = guide_legend(override.aes = list(color = c("gray20", "gray90"))))
 
-tag_facet(p1, fontface = 1, open = "", close = "", color = "gray20")
+tag_facet(p1, fontface = 1, open = "", close = ")", color = "gray20")
+
 ggsave(paste0(root_dir, "/figs/kappa_recovery.png"), width = 22, height = 17, unit = "cm")
-
-
-
-# Splitting the plot to make life easier 
-pdat_kappa <- pdat2 |> 
-  filter(par_name %in% c("log_kappaS", "RMSD"))
-
-pdat_other <- pdat2 |> 
-  filter(par_name %in% c("kappaT", "logit_rhoE"))
-
-# log_kappaS + RMSD
-p2 <- pdat_kappa |> 
-  ggplot(aes(type, par_hat)) +
-  facet_wrap(~ species_label + par_label_parsed, 
-             scales = "free", ncol = 2,
-             labeller = labeller(par_label_parsed = label_parsed,
-                                 species_label = function(x) "")) +
-  geom_hline(aes(yintercept = par_true), linetype = 2, color = "tomato") +
-  geom_quasirandom(aes(shape = true_model, fill = color_value), 
-                   alpha = 1, size = 1.1, color = "gray85") +
-  scale_shape_manual(values = c("AIC-selected" = 21, "Not AIC-selected" = 23), name = "") +
-  scale_fill_gradient2(name = expression(log(kappa[S])~or~RMSD (scaled))) +
-  geom_boxplot(fill = NA, color = "black", width = 0.15, size = 0.3, outlier.shape = NA) +
-  labs(y = "Estimated value", x = "Estimation model") +
-  guides(fill = guide_colorbar(title.position = "top", title.hjust = 0.5),
-         shape = guide_legend(ncol = 1, override.aes = list(alpha = 1, color = "grey50", size = 3))) + 
-  theme(legend.position = "bottom",
-        legend.key.width = unit(0.8, "cm"),
-        legend.key.height = unit(0.2, "cm"))
-
-tag_facet(p2, fontface = 1, open = "", close = "", color = "gray20")
-
-ggsave(paste0(root_dir, "/figs/kappa_recovery_logkappa_RMSD.png"), 
-       width = 20, height = 12, units = "cm")
-
-
-# kappaT + rhoE
-p3 <- pdat_other |> 
-  mutate(true_model = ifelse(true_model, "AIC-selected", "Not AIC-selected")) |>
-  ggplot(aes(type, par_hat)) +
-  facet_wrap(~ species_label + par_label_parsed, 
-             scales = "free", ncol = 2,
-             labeller = labeller(par_label_parsed = label_parsed,
-                                 species_label = function(x) "")) +
-  geom_hline(aes(yintercept = par_true), linetype = 2, color = "tomato") +
-  geom_quasirandom(aes(shape = true_model), size = 0.6, color = "gray10") +
-  geom_boxplot(fill = NA, color = "black", width = 0.15, size = 0.3, outlier.shape = NA) +
-  scale_shape_manual(values = c("AIC-selected" = 19, "Not AIC-selected" = 1), name = "") +
-  scale_alpha_manual(values = c(0.2, 0.15), name = "") +
-  labs(y = "Estimated value", x = "Estimation model") +
-  #coord_flip() +
-  theme(legend.position = "bottom")
-
-tag_facet(p3, fontface = 1, open = "", close = "", color = "gray20")
-
-ggsave(paste0(root_dir, "/figs/kappa_recovery_kappaT_rhoE.png"),
-       width = 17, height = 14, units = "cm")
 
