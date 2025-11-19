@@ -36,6 +36,8 @@ res_df |>
   ggplot(aes(fraction_best, type, fill = true_model)) +
   facet_wrap(~str_to_sentence(species), ncol = 3) +
   theme(legend.position = "bottom") +
+  theme(panel.spacing = unit(1, "lines"),
+        plot.margin = margin(5, 10, 5, 5)) +
   geom_col(width = 0.9) +
   labs(
     y = "Model",
