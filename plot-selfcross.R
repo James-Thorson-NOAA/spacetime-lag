@@ -86,13 +86,6 @@ pdat <- res_df |>
     type == "1-110" ~ "space+time",
     TRUE ~ type
   )) |>
-  # nice labels for plottings
-  mutate(par_label_parsed = case_when(
-    par_name == "kappaT" ~ "kappa[T]",
-    par_name == "log_kappaS" ~ "log(kappa[S])",
-    TRUE ~ par_name),
-    species_label = str_to_sentence(species)) |>
-  # left join the AIC selected (OMs)
   left_join(correct_models, by = "species") |>
   mutate(true_model = type == correct_type) |> 
   # filter the params we work with
@@ -101,19 +94,11 @@ pdat <- res_df |>
 # Filter true values (for horizontal lines)
 pdattrue <- pdat |> 
   filter(type_of_par == "par_true") |> 
-  distinct(value, par_label_parsed, species_label, type) |> 
-  mutate(par_label_parsed =
-           factor(par_label_parsed, 
-                  levels = c("log(kappa[S])", "kappa[T]", "AR(1)", "RMSD")))
-
-pdattrue
+  distinct(value, par_name, species, type)
 
 # Filter estimated parameters
 pdathat <- pdat |> 
   filter(type_of_par == "par_hat") |> 
-  mutate(par_label_parsed =
-           factor(par_label_parsed, 
-                  levels = c("log(kappa[S])", "kappa[T]", "AR(1)", "RMSD"))) |>
   mutate(true_model = ifelse(true_model == TRUE, "AIC-selected", "Not AIC-selected")) 
 
 # Add in rmsd (for making different symbols)
@@ -129,26 +114,60 @@ pdathat <- pdathat |>
                               "RMSD<1", "RMSD>1"),
          shape_value = replace_na(shape_value, "RMSD>1"))
 
-# Finally, plot
+
+pdathat <- pdathat |> 
+  mutate(
+    # Create a combined label for custom ordering
+    facet_order = paste(par_name, species, sep = "_"),
+    facet_order = factor(facet_order, 
+                         levels = c("log_kappaS_capelin", 
+                                    "kappaT_capelin", 
+                                    "kappaT_pacific halibut",
+                                    "RMSD_capelin", 
+                                    "AR(1)_capelin", 
+                                    "AR(1)_pacific halibut"))
+  ) |> 
+  mutate(species = str_to_sentence(species))
+
+# Do the same for pdattrue
+pdattrue <- pdattrue |> 
+  mutate(
+    # Create a combined label for custom ordering
+    facet_order = paste(par_name, species, sep = "_"),
+    facet_order = factor(facet_order, 
+                         levels = c("log_kappaS_capelin", 
+                                    "kappaT_capelin", 
+                                    "kappaT_pacific halibut",
+                                    "RMSD_capelin", 
+                                    "AR(1)_capelin", 
+                                    "AR(1)_pacific halibut"))
+  )
+
 p1 <- pdathat |> 
   ggplot(aes(type, value)) +
-  facet_wrap(~species_label + par_label_parsed, 
+  facet_wrap(~facet_order, 
              scales = "free", 
              ncol = 3,
-             labeller = labeller(par_label_parsed = label_parsed, 
-                                 species_label = function(x) "")) +
+             labeller = labeller(facet_order = as_labeller(
+               c("log_kappaS_capelin" = "log(kappa[S])",
+                 "kappaT_capelin" = "kappa[T]",
+                 "kappaT_pacific halibut" = "kappa[T]",
+                 "RMSD_capelin" = "RMSD",
+                 "AR(1)_capelin" = "AR(1)",
+                 "AR(1)_pacific halibut" = "AR(1)"),
+               default = label_parsed
+             ))) +
   geom_hline(data = pdattrue, aes(yintercept = value, linetype = type),
              color = "tomato", alpha = 0.5, linewidth = 0.6) +
   geom_quasirandom(aes(fill = true_model, shape = shape_value),
                    alpha = 0.8, size = 1, color = "gray70") +
   scale_linetype_manual(values = c(3, 2, 1), name = "True value") +
-  #scale_linetype_manual(values = c(2, 1, 1), name = "") +
   scale_shape_manual(values = c(4, 21), name = "") +
   scale_fill_manual(values = c("gray50", "gray99"), name = "") +
   geom_boxplot(fill = NA, width = 0.2, size = 0.4,
                outlier.shape = NA, color = "gray20") +
-  geom_text(data = . %>% distinct(species_label, par_label_parsed),
-            aes(label = species_label, x = Inf, y = Inf),
+  geom_text(data = . %>% distinct(species, facet_order),
+            aes(label = species, x = Inf, y = Inf),
             hjust = 1.1, vjust = 1.2, size = 3, color = "gray30") +
   labs(y = "Estimated value",
        x = "Estimation model") +
@@ -160,5 +179,5 @@ p1 <- pdathat |>
 
 tag_facet(p1, fontface = 1, open = "", close = ")", color = "gray20")
 
-ggsave(paste0(root_dir, "/figs/kappa_recovery.png"), width = 22, height = 17, unit = "cm")
+ggsave(paste0(root_dir, "/figs/kappa_recovery2.png"), width = 22, height = 17, unit = "cm")
 
