@@ -60,9 +60,10 @@ pdat <- res_df |>
   pivot_wider(names_from = "par_name", values_from = c("par_true", "par_hat")) |> 
   mutate(`par_true_AR(1)` = par_true_kappaT / (par_true_kappaT + 1),
          `par_hat_AR(1)` = par_hat_kappaT / (par_hat_kappaT + 1),
-         par_true_RMSD = ifelse(type == "1-100", 
-                                sqrt(4 * exp(-2 * par_true_log_kappaS) * (1 - 0 / (1 + 0))),
-                                sqrt(4 * exp(-2 * par_true_log_kappaS) * (1 - par_true_kappaT / (1 + par_true_kappaT)))),
+         # par_true_RMSD = ifelse(type == "1-100", 
+         #                        sqrt(4 * exp(-2 * par_true_log_kappaS) * (1 - 0 / (1 + 0))),
+         #                        sqrt(4 * exp(-2 * par_true_log_kappaS) * (1 - par_true_kappaT / (1 + par_true_kappaT)))),
+         par_true_RMSD = sqrt(4 * exp(-2 * par_true_log_kappaS) * (1 - par_true_kappaT / (1 + par_true_kappaT))),
          par_hat_RMSD = ifelse(type == "1-100", 
                                sqrt(4 * exp(-2 * par_hat_log_kappaS) * (1 - 0 / (1 + 0))),
                                sqrt(4 * exp(-2 * par_hat_log_kappaS) * (1 - par_hat_kappaT / (1 + par_hat_kappaT)))),
@@ -157,11 +158,11 @@ p1 <- pdathat |>
                  "AR(1)_pacific halibut" = "AR(1)"),
                default = label_parsed
              ))) +
-  geom_hline(data = pdattrue, aes(yintercept = value, linetype = type),
-             color = "tomato", alpha = 0.5, linewidth = 0.6) +
+  geom_hline(data = pdattrue, aes(yintercept = value), linetype = 2,
+             color = "tomato", alpha = 0.7, linewidth = 0.6) +
   geom_quasirandom(aes(fill = true_model, shape = shape_value),
                    alpha = 0.8, size = 1, color = "gray70") +
-  scale_linetype_manual(values = c(3, 2, 1), name = "True value") +
+  #scale_linetype_manual(values = c(3, 2, 1), name = "True value") +
   scale_shape_manual(values = c(4, 21), name = "") +
   scale_fill_manual(values = c("gray50", "gray99"), name = "") +
   geom_boxplot(fill = NA, width = 0.2, size = 0.4,
@@ -173,8 +174,8 @@ p1 <- pdathat |>
        x = "Estimation model") +
   theme(legend.position = "bottom",
         legend.key.width = unit(0.5, "cm")) +
-  guides(fill = guide_legend(ncol = 1, override.aes = list(color = c("gray20", "gray90"))),
-         shape = guide_legend(ncol = 1),
+  guides(fill = guide_legend(ncol = 2, override.aes = list(color = c("gray20", "gray90"))),
+         shape = guide_legend(ncol = 2),
          linetype = guide_legend(title.position = "top", title.hjust = 0.5))
 
 tag_facet(p1, fontface = 1, open = "", close = ")", color = "gray20")
