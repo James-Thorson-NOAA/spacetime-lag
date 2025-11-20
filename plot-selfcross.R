@@ -179,5 +179,5 @@ p1 <- pdathat |>
 
 tag_facet(p1, fontface = 1, open = "", close = ")", color = "gray20")
 
-ggsave(paste0(root_dir, "/figs/kappa_recovery2.png"), width = 22, height = 17, unit = "cm")
+ggsave(paste0(root_dir, "/figs/kappa_recovery.png"), width = 22, height = 17, unit = "cm")
 
