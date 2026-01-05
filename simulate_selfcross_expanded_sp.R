@@ -15,16 +15,13 @@
 library(TMB)
 library(tidyr)
 library(dplyr)
-library(ggplot2)
-library(ggsidekick); theme_set(theme_sleek())
 library(sf)
 library(tictoc)
 library(furrr)
 library(purrr)
 library(readr)
-library(ggbeeswarm)
-library(ggh4x)
 library(stringr)
+library(here)
 
 root_dir <- here::here()
 version <- "spacetime_lag_2025_10_24"
@@ -37,7 +34,8 @@ species_list <- c("capelin", "pacific cod", "pacific halibut")
 
 # number of simulation replicates per species. 
 # 200 sims takes ~8h with cutoff 60
-n_sim <- 100
+# 100 sims takes 2.5 days with cutoff 40
+n_sim <- 300
 
 # define the model configurations
 config_list <- list(
@@ -51,10 +49,12 @@ config_set <- config_set[which(config_set$space == 1 | config_set$diffusion == 0
 
 # load the full parameter template in the global (use capelin but they are all the same)
 #base_dir <- file.path(root_dir, "2025-11-09", "capelin")
-base_dir <- file.path(root_dir, "2025-11-09", "capelin")
-obj_path_full <- file.path(base_dir, "1-110", "obj.RDS")
-full_obj <- readRDS(obj_path_full)
-par_template <- full_obj$env$parList() 
+# for linux, we want to use this with run_species_sim()!
+# base_dir <- file.path(root_dir, "2025-11-09", "capelin")
+# obj_path_full <- file.path(base_dir, "1-110", "obj.RDS")
+# full_obj <- readRDS(obj_path_full)
+# par_template <- full_obj$env$parList() 
+
 
 # load Sean's functions
 reload_obj <- function(old_obj, tmb_dat) {
@@ -174,12 +174,18 @@ do_one_sim <- function(obj_oper, tmb_dat_oper, par_template, iter, seed, config_
 # function to set up everything needed for do_one_sim(), and then does that (sequentially) for n_sim replicates.
 run_species_sim <- function(species, version, n_sim, seeds, config_set) {
   
-  # need to load here again
-  dyn.load(dynlib(version))
+  # Load TMB library inside worker (avoiding linux crash)
+  if (!version %in% names(getLoadedDLLs())) {
+    dyn.load(dynlib(version))
+  }
+  
+  obj_path_full <- file.path(root_dir, "2025-11-09", species, "1-110", "obj.RDS")
+  full_obj_local <- readRDS(obj_path_full)
+  par_template <- full_obj_local$env$parList()
   
   # build file paths for the species data
   base_dir <- file.path(root_dir, "2025-11-09", species)
-
+  
   # load AIC selected model for each species do use in the simulation part of do_one_sim
   # config codes are: type <- paste0(do_quadratic, "-", do_space, do_time, do_diffusion)
   if (species == "capelin"){
@@ -225,15 +231,25 @@ run_species_sim <- function(species, version, n_sim, seeds, config_set) {
 }
 
 # now we do the top-level future_map2, which does run_species_sim() for each species in parallel
-future::plan(future::multisession, workers = length(species_list))
+future::plan(future::multisession, workers = 3)
+# supposedly more linux friendly, but doesnt work on server
+#future::plan(future::multicore, workers = 3)
 species_seeds <- map(species_list, ~ sample(seq_len(1e5L), size = n_sim))
 
 tic()
-all_results <- future_map2(
+# On Linux server:
+# Error: Future (<unnamed-1>) of class MultisessionFuture interrupted, while running on ‘localhost’ (pid 974389)
+# all_results <- future_map2(
+#   species_list,
+#   species_seeds,
+#   \(species, seeds) run_species_sim(species, version, n_sim = n_sim, seeds = seeds,
+#                                     config_set = config_set)
+# )
+all_results <- map2(
   species_list,
   species_seeds,
-  \(species, seeds) run_species_sim(species, version, n_sim = n_sim, seeds = seeds,
-                                    config_set = config_set)
+  \(species, seeds) run_species_sim(species, version, n_sim = n_sim, 
+                                    seeds = seeds, config_set = config_set)
 )
 toc()
 
@@ -241,4 +257,5 @@ names(all_results) <- species_list
 res_df <- bind_rows(all_results)
 
 # save!
-write_csv(res_df, file = file.path(root_dir, paste0("2025-11-09/simulation_selfcross_out_", n_sim, "_reps.csv")))
+write_csv(res_df, file = file.path(root_dir, paste0("2026-01-05/simulation_selfcross_out_", n_sim, "_reps.csv")))
+
