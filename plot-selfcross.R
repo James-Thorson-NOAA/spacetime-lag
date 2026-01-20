@@ -11,9 +11,10 @@ library(ggsidekick); theme_set(theme_sleek())
 root_dir <- here::here()
 
 # plot
-n_sim <- 100
+n_sim <- 300
 
-res_df <- read_csv(file.path(root_dir, paste0("2025-11-09/simulation_selfcross_out_", n_sim, "_reps.csv")))
+res_df <- read_csv(file.path(root_dir, paste0("2026-01-05/simulation_selfcross_out_", n_sim, "_reps.csv")))
+#res_df <- read_csv(file.path(root_dir, paste0("2025-11-09/simulation_selfcross_out_", n_sim, "_reps.csv")))
 #res_df <- read_csv(file.path(root_dir, paste0("2025-11-09/simulation_selfcross_out_", n_sim, "_reps.csv")))
 
 # specify true model for each species
@@ -115,6 +116,9 @@ rmsd <- pdathat |>
   filter(par_name == "RMSD" & type %in% c("ST", "S")) |> 
   dplyr::select(iter, type, species, value) |> 
   rename(RMSD = value)
+# 
+# t <- rmsd |> tidylog::filter(RMSD < 1)
+# t
 
 # Join the rmsd to the main par df
 pdathat <- pdathat |> 
@@ -153,6 +157,7 @@ pdattrue <- pdattrue |>
 legend_col <- brewer.pal(3, "Dark2")[1:2]
 
 p1 <- pdathat |> 
+  tidylog::filter(!(species == "capelin" & par_name == "kappaT" & value > 200 )) |> 
   ggplot(aes(type, value)) +
   facet_wrap(~facet_order, 
              scales = "free", 
@@ -170,10 +175,11 @@ p1 <- pdathat |>
              ) +
   geom_hline(data = pdattrue, aes(yintercept = value), linetype = 2,
              color = "tomato", alpha = 0.7, linewidth = 0.6) +
-  geom_quasirandom(aes(fill = true_model, shape = shape_value),
-                   alpha = 0.4, size = 1.5, color = "gray95") +
+  geom_quasirandom(aes(fill = true_model, shape = shape_value, color = shape_value), stroke = 0.5, 
+                   alpha = 0.3, size = 1.5) +
   scale_shape_manual(values = c(4, 21), name = "") +
   scale_fill_brewer(palette = "Dark2", name = "operating model", direction = -1) +
+  scale_color_manual(values = c("grey20", "grey95")) + 
   geom_boxplot(fill = NA, width = 0.2, size = 0.4,
                outlier.shape = NA, color = "gray20") +
   geom_text(data = . %>% distinct(species, facet_order),
@@ -185,6 +191,7 @@ p1 <- pdathat |>
         legend.key.width = unit(0.5, "cm"),
         strip.text.x.top = element_text(size = 9.5)) +
   guides(fill = guide_legend(ncol = 2, override.aes = list(color = rev(legend_col))),
+         color = "none",
          shape = guide_legend(ncol = 2, override.aes = list(color = "gray10")),
          linetype = guide_legend(title.position = "top", title.hjust = 0.5))
 
