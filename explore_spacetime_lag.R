@@ -108,7 +108,7 @@ colSums(d1_gt)
 
 # Calculate centroid ... shouldn't change given diffusion
 # And calculate diffusion ~propto~ MSD
-Mean_tz = array(NA, dim = c(n_t,2), dimnames = list(NULL,c("X","Y")) )
+Mean_tz = array(NA, dim = c(n_t,2), dimnames = list(time = seq_len(n_t),coord = c("mean_X","mean_Y")) )
 MSD_t = rep(NA, n_t)
 for(t in seq_len(n_t) ){
   Mean_tz[t,] = apply(coords_gz, MARGIN=2, FUN=weighted.mean, w=d1_gt[,t])
