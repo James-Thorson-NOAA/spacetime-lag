@@ -1,0 +1,57 @@
+$`pacific cod`
+  space time diffusion quadratic   runtime pars      obj      AIC log_kappaS se_log_kappaS     kappaT kappaST       rhoT    se_rhoT AIC_weight         MSD       RMSD
+1     0    0         0         1  8.236976    9 75136.12 0.000000         NA            NA         NA      NA         NA         NA 0.49619222          NA         NA
+2     1    0         0         1  8.193786   10 75136.12 2.000018   3.167549            NA         NA      NA         NA         NA 0.18253731 0.007091887 0.08421334
+3     0    1         0         1  7.429890   10 75135.87 1.495881         NA            NA 0.04403191      NA 0.04217487 0.05891239 0.23486786          NA         NA
+4     1    1         0         1 48.137311   11 75135.87 3.495891   3.130579            NA 0.04405714      NA 0.04219802 0.05891419 0.08640262 0.007313901 0.08552135
+   se_RMSD
+1       NA
+2 14.17155
+3       NA
+4 16.66384
+
+$`walleye pollock`
+  space time diffusion quadratic   runtime pars      obj      AIC log_kappaS se_log_kappaS   kappaT kappaST      rhoT   se_rhoT AIC_weight       MSD     RMSD  se_RMSD
+1     0    0         0         1  6.592810    9 94085.76 2.550718         NA            NA       NA      NA        NA        NA  0.1547774        NA       NA       NA
+2     1    0         0         1  8.364043   10 94085.12 3.278216  -2.556026            NA       NA      NA        NA        NA  0.1075804  664.0431 25.76903 14.00871
+3     0    1         0         1  6.860367   10 94084.58 2.209814         NA            NA 0.197322      NA 0.1648028 0.1018883  0.1835413        NA       NA       NA
+4     1    1         0         1 26.527222   11 94082.48 0.000000  -3.222695            NA 0.442050      NA 0.3065428 0.1222360  0.5541009 1746.9350 41.79635 14.71490
+
+$capelin
+  space time diffusion quadratic   runtime pars      obj      AIC log_kappaS se_log_kappaS   kappaT kappaST      rhoT    se_rhoT   AIC_weight      MSD     RMSD  se_RMSD
+1     0    0         0         1  4.593361    9 5177.929 21.88169         NA            NA       NA      NA        NA         NA 1.754925e-05       NA       NA       NA
+2     1    0         0         1  5.304350   10 5171.537 11.09946  -3.572619            NA       NA      NA        NA         NA 3.851152e-03 5072.211 71.21946 18.27037
+3     0    1         0         1  4.733403   10 5171.139 10.30171         NA            NA 1.094259      NA 0.5225042 0.09649600 5.738769e-03       NA       NA       NA
+4     1    1         0         1 30.317361   11 5164.988  0.00000  -3.875144            NA 2.312368      NA 0.6981012 0.07813546 9.903925e-01 2804.326 52.95588 15.38281
+
+$`pacific herring`
+  space time diffusion quadratic   runtime pars      obj       AIC log_kappaS se_log_kappaS   kappaT kappaST      rhoT    se_rhoT  AIC_weight          MSD        RMSD
+1     0    0         0         1  8.641042    9 17575.55 10.255130         NA            NA       NA      NA        NA         NA 0.005022905           NA          NA
+2     1    0         0         1 13.716487   10 17575.55 12.255131   3.032193            NA       NA      NA        NA         NA 0.001847822 9.296735e-03  0.09641958
+3     0    1         0         1 12.094064   10 17571.18  3.512685         NA            NA 2.716803      NA 0.7309516 0.10359776 0.146237283           NA          NA
+4     1    1         0         1 25.693764   11 17568.42  0.000000  -4.038508            NA 5.033291      NA 0.8342530 0.08356205 0.846891991 2.134565e+03 46.20134835
+   se_RMSD
+1       NA
+2 39.12035
+3       NA
+4 15.70356
+
+$`arrowtooth flounder`
+  space time diffusion quadratic   runtime pars      obj      AIC log_kappaS se_log_kappaS    kappaT kappaST      rhoT    se_rhoT AIC_weight      MSD     RMSD  se_RMSD
+1     0    0         0         1  7.326608    9 31979.51 6.124399         NA            NA        NA      NA        NA         NA  0.0313445       NA       NA       NA
+2     1    0         0         1  7.965471   10 31976.89 2.874999  -2.714776            NA        NA      NA        NA         NA  0.1591328 912.1882 30.20245 8.239202
+3     0    1         0         1  5.397202   10 31977.02 3.137643         NA            NA 0.2142841      NA 0.1764695 0.07417511  0.1395491       NA       NA       NA
+4     1    1         0         1 30.045030   11 31974.45 0.000000  -2.828082            NA 0.2556040      NA 0.2035706 0.08727604  0.6699736 911.2719 30.18728 8.364515
+
+$`pacific halibut`
+  space time diffusion quadratic   runtime pars      obj       AIC log_kappaS se_log_kappaS    kappaT kappaST      rhoT    se_rhoT  AIC_weight          MSD       RMSD
+1     0    0         0         1 10.460083    9 45538.80  9.584055         NA            NA        NA      NA        NA         NA 0.006014697           NA         NA
+2     1    0         0         1  7.798123   10 45538.80 11.584064   4.344789            NA        NA      NA        NA         NA 0.002212673 0.0006733240 0.02594849
+3     0    1         0         1  7.139695   10 45533.01  0.000000         NA            NA 0.4529521      NA 0.3117461 0.08649302 0.725044785           NA         NA
+4     1    1         0         1 36.249845   11 45533.01  2.000009   4.130321            NA 0.4529311      NA 0.3117361 0.08649123 0.266727845 0.0007116452 0.02667668
+   se_RMSD
+1       NA
+2 5.974002
+3       NA
+4 6.037854
+

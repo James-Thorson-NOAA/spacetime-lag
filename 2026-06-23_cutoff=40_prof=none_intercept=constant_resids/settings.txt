@@ -1,0 +1,40 @@
+$rescale
+[1] 1
+
+$cutoff1
+[1] 40
+
+$cutoff2
+[1] 40
+
+$profile
+NULL
+
+$covariate
+[1] "anomaly"
+
+$log_kappaS_start
+[1] -0.804719
+
+$config_set
+  space time diffusion quadratic
+1     0    0         0         1
+2     1    0         0         1
+3     0    1         0         1
+4     1    1         0         1
+
+$version
+[1] "spacetime_lag_2026_06_23"
+
+$hesscompress
+[1] FALSE
+
+$run_sdreport
+[1] TRUE
+
+$L1version
+[1] "stationary"
+
+$intercept
+[1] "constant"
+

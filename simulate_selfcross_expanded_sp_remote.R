@@ -24,7 +24,7 @@ library(stringr)
 library(here)
 
 root_dir <- here::here()
-version <- "spacetime_lag_2025_10_24"
+version <- "spacetime_lag"
 
 setwd(root_dir)
 compile(paste0(version, ".cpp"), framework = "TMBad")

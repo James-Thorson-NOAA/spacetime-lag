@@ -1,0 +1,45 @@
+$par
+ log_kappaS      kappaT     gamma_j     gamma_j      beta_k     ln_tauO     ln_tauE    ln_kappa      ln_phi  logit_rhoE  finv_power 
+-2.82808188  0.25560404  0.93339669 -0.13148081 -5.13867210  3.06631073  3.95766332 -5.82077214  1.40270406  1.28873164 -0.07143452 
+
+$objective
+[1] 31974.45
+
+$convergence
+[1] 0
+
+$iterations
+[1] 67
+
+$evaluations
+function gradient 
+      90       68 
+
+$message
+[1] "relative convergence (4)"
+
+$AIC
+[1] 63970.9
+
+$SD
+sdreport(.) result
+              Estimate Std. Error
+log_kappaS -2.82808188 0.28928056
+kappaT      0.25560404 0.13759430
+gamma_j     0.93339669 0.15446123
+gamma_j    -0.13148081 0.04088007
+beta_k     -5.13867210 6.02201540
+ln_tauO     3.06631073 0.07494888
+ln_tauE     3.95766332 0.04889240
+ln_kappa   -5.82077214 0.07845192
+ln_phi      1.40270406 0.01777759
+logit_rhoE  1.28873164 0.17433866
+finv_power -0.07143452 0.01769593
+Maximum gradient component: 0.003349411 
+
+$compile_time
+Time difference of 1.774397 mins
+
+$runtime
+Time difference of 30.04503 mins
+

@@ -1,0 +1,25 @@
+"species","space","time","runtime","AIC","rhoT","MSD","RMSD"
+"pacific cod","","",8.24,0,NA,NA,NA
+"pacific cod","X","",8.19,2,NA,0,0
+"pacific cod","","X",7.43,1.5,0.04,NA,NA
+"pacific cod","X","X",48.14,3.5,0.04,0,0
+"walleye pollock","","",6.59,2.55,NA,NA,NA
+"walleye pollock","X","",8.36,3.28,NA,664,26
+"walleye pollock","","X",6.86,2.21,0.16,NA,NA
+"walleye pollock","X","X",26.53,0,0.31,1747,42
+"capelin","","",4.59,21.88,NA,NA,NA
+"capelin","X","",5.3,11.1,NA,5072,71
+"capelin","","X",4.73,10.3,0.52,NA,NA
+"capelin","X","X",30.32,0,0.7,2804,53
+"pacific herring","","",8.64,10.26,NA,NA,NA
+"pacific herring","X","",13.72,12.26,NA,0,0
+"pacific herring","","X",12.09,3.51,0.73,NA,NA
+"pacific herring","X","X",25.69,0,0.83,2135,46
+"arrowtooth flounder","","",7.33,6.12,NA,NA,NA
+"arrowtooth flounder","X","",7.97,2.87,NA,912,30
+"arrowtooth flounder","","X",5.4,3.14,0.18,NA,NA
+"arrowtooth flounder","X","X",30.05,0,0.2,911,30
+"pacific halibut","","",10.46,9.58,NA,NA,NA
+"pacific halibut","X","",7.8,11.58,NA,0,0
+"pacific halibut","","X",7.14,0,0.31,NA,NA
+"pacific halibut","X","X",36.25,2,0.31,0,0
