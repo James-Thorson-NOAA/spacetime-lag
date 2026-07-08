@@ -1,4 +1,4 @@
-"species","space","time","runtime","AIC","rhoT","MSD","RMSD"
+"species","space","time","runtime","AIC","rhoT","MSDK","RMSDK"
 "pacific cod","","",8.24,0,NA,NA,NA
 "pacific cod","X","",8.19,2,NA,0,0
 "pacific cod","","X",7.43,1.5,0.04,NA,NA

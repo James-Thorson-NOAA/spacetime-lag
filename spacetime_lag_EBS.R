@@ -307,7 +307,6 @@ for( ci in seq_len(nrow(config_set)) ){
 ##########################
 
 # 
-#root_dir = R'(C:\Users\james\OneDrive\Desktop\Work files (backup)\Collab-2025\2025 -- spacetime distributed lag)'
 source( file.path( root_dir, "add_legend.R") )
 
 library(TMB)
@@ -344,7 +343,7 @@ if( covariate == "temp" ){
 #config_set = config_set[ which(config_set$space==1 | config_set$diffusion==0), ]
 model_names = c("null", "S", "T", "ST")
 
-pars = c("runtime", "pars", "obj", "AIC", "log_kappaS", "se_log_kappaS", "kappaT", "kappaST", "rhoT", "se_rhoT", "AIC_weight", "MSD", "RMSD", "se_RMSD")   # "RMSD_low", "RMSD_high"
+pars = c("runtime", "pars", "obj", "AIC", "log_kappaS", "se_log_kappaS", "kappaT", "kappaST", "rhoT", "se_rhoT", "AIC_weight", "MSDK", "RMSDK", "se_RMSDK")   # "RMSD_low", "RMSD_high"
 results_scz = array( NA, dim=c(length(species_set),nrow(config_set),length(pars)),
                     dimnames = list(species = species_set, model = model_names, par = pars) )
 gamma_scjz = array( NA, dim=c(length(species_set),nrow(config_set),2,2), 
@@ -386,7 +385,7 @@ for( ci in seq_len(nrow(config_set)) ){
       }
       results_scz[si,ci,"kappaST"] = opt$par['kappaST']
       if( "MSD" %in% names(rep) ){
-        results_scz[si,ci,'MSD'] = rep$MSD
+        results_scz[si,ci,'MSDK'] = rep$MSD
       }
       #if( L1version == "innovations" ){
       #  results_scz[si,ci,'MSD'] = 4 / exp(results_scz[si,ci,"log_kappaS"])^2
@@ -400,8 +399,8 @@ for( ci in seq_len(nrow(config_set)) ){
       #  results_scz[si,ci,'MSD'] = 4 / exp(results_scz[si,ci,"log_kappaS"])^2 * ifelse( is.na(results_scz[si,ci,"rhoT"]), 1, 1-results_scz[si,ci,"rhoT"] )
       #}
       if( !is.na(opt$SD[1]) && ("RMSD" %in% names(rep))  ){
-        results_scz[si,ci,'RMSD'] = rep$RMSD
-        results_scz[si,ci,"se_RMSD"] = as.list(opt$SD, what = "Std. Error", report = TRUE)$RMSD
+        results_scz[si,ci,'RMSDK'] = rep$RMSD
+        results_scz[si,ci,"se_RMSDK"] = as.list(opt$SD, what = "Std. Error", report = TRUE)$RMSD
       }
       if( !is.na(opt$SD[1]) ){
         gamma_scjz[si,ci,,'hat'] = as.list(opt$SD, what = "Estimate")$gamma_j
@@ -437,9 +436,9 @@ capture.output( summary, file = file.path(root_dir, Date, "summary.txt") )
 #
 Table = do.call( rbind, summary )
 Table = cbind( species = rep(species_set, each = nrow(config_set)), Table )
-Table = Table[,c("species","space","time","runtime","AIC","rhoT","MSD","RMSD")]
+Table = Table[,c("species","space","time","runtime","AIC","rhoT","MSDK","RMSDK")]
 Table[,c("runtime","AIC","rhoT")] = round(Table[,c("runtime","AIC","rhoT")],2)
-Table[,c("MSD","RMSD")] = round(Table[,c("MSD","RMSD")],0)
+Table[,c("MSDK","RMSDK")] = round(Table[,c("MSDK","RMSDK")],0)
 Table[,c("space","time")] = ifelse(Table[,c("space","time")]==1, "X", "")
 write.csv( Table, row.names = FALSE, file = file.path(date_dir,"Table1.csv") )
 
@@ -474,7 +473,7 @@ png( file = file.path(date_dir,"summary.png"), width = 1.1 * length(species_set)
   ylim2 = buffer( results_scz[,,"rhoT"] - 1.96 * results_scz[,,"se_rhoT"], results_scz[,,"rhoT"] + 1.96 *results_scz[,,"se_rhoT"], extra = 0.2 )
   #ylim3 = buffer( results_scz[,,"RMSD"], extra = 0.2 )
   #ylim3 = buffer( results_scz[,,"RMSD_low"], results_scz[,,"RMSD_high"], extra = 0.2 )
-  ylim3 = buffer( results_scz[,,"RMSD"] - 1.96 * results_scz[,,"se_RMSD"], results_scz[,,"RMSD"] + 1.96 *results_scz[,,"se_RMSD"], extra = 0.2 )
+  ylim3 = buffer( results_scz[,,"RMSDK"] - 1.96 * results_scz[,,"se_RMSDK"], results_scz[,,"RMSDK"] + 1.96 *results_scz[,,"se_RMSDK"], extra = 0.2 )
   xlim = c(0.5, 4.5)
   for( si in seq_along(species_set) ){
     # AIC weights
@@ -490,20 +489,20 @@ png( file = file.path(date_dir,"summary.png"), width = 1.1 * length(species_set)
             y0 = results_scz[si,,"rhoT"] - 1.96 *results_scz[si,,"se_rhoT"],
             y1 = results_scz[si,,"rhoT"] + 1.96 *results_scz[si,,"se_rhoT"],
             angle=90, code=3, length=0.05 )
-    if(si==1) mtext( side = 2, text = expression(rho[t]), line = 2 )
+    if(si==1) mtext( side = 2, text = expression(phi), line = 2 )
     if(si==1) axis(2)
     abline( h = 0, lty = "dotted")
     #
-    plot( x = seq_len(nrow(config_set)), y = results_scz[si,,"RMSD"], xlab = "", ylab = "", xlim = xlim,
+    plot( x = seq_len(nrow(config_set)), y = results_scz[si,,"RMSDK"], xlab = "", ylab = "", xlim = xlim,
           xaxt = "n", ylim = ylim3, pch = 21, bg = "black", yaxt = "n", cex = 2 )
     arrows( x0 = seq_len(nrow(config_set)), x1 = seq_len(nrow(config_set)),
             #y0 = results_scz[si,,"RMSD_low"],
             #y1 = results_scz[si,,"RMSD_high"],
-            y0 = results_scz[si,,"RMSD"] - 1.96 *results_scz[si,,"se_RMSD"],
-            y1 = results_scz[si,,"RMSD"] + 1.96 *results_scz[si,,"se_RMSD"],
+            y0 = results_scz[si,,"RMSDK"] - 1.96 *results_scz[si,,"se_RMSDK"],
+            y1 = results_scz[si,,"RMSDK"] + 1.96 *results_scz[si,,"se_RMSDK"],
             angle=90, code=3, length=0.05 )
     axis( side = 1, at = seq_len(nrow(config_set)), labels = model_names )
-    if(si==1) mtext( side = 2, text = "Root-mean squared\ndisplacement (km)", line = 2 )
+    if(si==1) mtext( side = 2, text = "Root-mean squared\ndiffusion kernel (km)", line = 2 )
     if(si==1) axis(2)
     abline( h = 0, lty = "dotted")
   }
