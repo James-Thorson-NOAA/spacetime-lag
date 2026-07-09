@@ -36,7 +36,7 @@ Type objective_function<Type>::operator() ()
 
   // Data
   DATA_IVECTOR( options_z );
-  // options_z(0)=0: L1 is stationary  |  options_z(0)=1: L1 is innovations
+  // options_z(0)=0: L1 is innovations  |  options_z(0)=1: L1 is stationary
   // options_z(1) NOT USED
   DATA_INTEGER( n_t );
   DATA_VECTOR( a_g );  // Area associated with grid-cell g

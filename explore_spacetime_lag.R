@@ -12,13 +12,14 @@ n_x = 3200   # Number of samples
 n_t = 3
 
 # Spatial correlation
-ln_kappa = log(10)
+kappa_S = 10
 
 # Temporal autocorrelation
-rho_t = c( 0, 0.8 )[2]
+kappa_t = c(0, 0.5)[2]
+rho_T = kappa_t / (1 + kappa_t)
 
 # Spatio-temporal diffusion parameter
-rho_st = c( 0, -rho_t)[2]
+kappa_st = -kappa_t
 # If rho_st > 0, then negative values at release point for transformed point-mass
 # If rho_st < -rho_t, then negative values at boundaries for transformed point-mass
 
@@ -62,16 +63,16 @@ A_gs = A_gs * ( 1 / nrow(A_gs) )
 
 # inverse-diffusion
 # rowSums(G_ss) = 0
-G_ss = -1 * exp(-2 * ln_kappa) * invM0 %*% spde$g1
+G_ss = -1 * kappa_S^(-2) * invM0 %*% spde$g1
 # invD_ss = I_ss - G_ss
 
 # Joint operator
 P_kk = Diagonal( n = n_k, x = 0 )
 P_kk = P_kk + kronecker( I_tt, G_ss )
 if( n_t > 1 ){
-  L1_tt = bandSparse( n = n_t, k = -1 )
-  P_kk = P_kk + rho_t * kronecker( L1_tt, I_ss )
-  P_kk = P_kk + rho_st * kronecker( L1_tt, G_ss )
+  L_tt = bandSparse( n = n_t, k = -1 ) - Diagonal( n = n_t )
+  P_kk = P_kk + kappa_t * kronecker( L_tt, I_ss )
+  P_kk = P_kk + kappa_st * kronecker( L_tt, G_ss )
 }
 
 # Check with midpoint of domain
@@ -103,7 +104,7 @@ plot(
 # Check for volume in original
 colSums(d0_gt)
 
-# Check for volume in STDL transform ... should decay at kappa_T
+# Check for volume in STDL transform ... should decay at rho_T
 colSums(d1_gt)
 
 # Calculate centroid ... shouldn't change given diffusion
