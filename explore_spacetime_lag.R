@@ -15,13 +15,13 @@ n_t = 3
 kappa_S = 10
 
 # Temporal autocorrelation
-kappa_t = c(0, 0.5)[2]
-rho_T = kappa_t / (1 + kappa_t)
+kappa_T = c(0, 0.5)[2]
+rho_T = kappa_T / (1 + kappa_T)
 
 # Spatio-temporal diffusion parameter
-kappa_st = -kappa_t
-# If rho_st > 0, then negative values at release point for transformed point-mass
-# If rho_st < -rho_t, then negative values at boundaries for transformed point-mass
+kappa_ST = -0.5 * kappa_T
+# If kappa_ST > 0, then negative values at release point for transformed point-mass
+# If kappa_ST < -kappa_T, then negative values at boundaries for transformed point-mass
 
 # simulate locations from Poisson or Poisson-disk
 loc = poisson2disk( n=n_x, a = 1, b = 1 )
@@ -62,17 +62,17 @@ A_gs = fm_evaluator( mesh, loc=coords_gz )$proj$A
 A_gs = A_gs * ( 1 / nrow(A_gs) )
 
 # inverse-diffusion
-# rowSums(G_ss) = 0
-G_ss = -1 * kappa_S^(-2) * invM0 %*% spde$g1
-# invD_ss = I_ss - G_ss
+# rowSums(P_ss) = 0
+P_ss = -1 * invM0 %*% spde$g1
+# invD_ss = I_ss - P_ss
 
 # Joint operator
 P_kk = Diagonal( n = n_k, x = 0 )
-P_kk = P_kk + kronecker( I_tt, G_ss )
+P_kk = P_kk + kappa_S^(-2) * kronecker( I_tt, P_ss )
 if( n_t > 1 ){
   L_tt = bandSparse( n = n_t, k = -1 ) - Diagonal( n = n_t )
-  P_kk = P_kk + kappa_t * kronecker( L_tt, I_ss )
-  P_kk = P_kk + kappa_st * kronecker( L_tt, G_ss )
+  P_kk = P_kk + kappa_T * kronecker( L_tt, I_ss )
+  P_kk = P_kk + kappa_ST * kappa_S^(-2) * kronecker( L_tt, P_ss )
 }
 
 # Check with midpoint of domain
