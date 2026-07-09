@@ -12,14 +12,15 @@ n_x = 3200   # Number of samples
 n_t = 3
 
 # Spatial correlation
-kappa_S = 10
+kappa_S = 25
 
 # Temporal autocorrelation
 kappa_T = c(0, 0.5)[2]
 rho_T = kappa_T / (1 + kappa_T)
+MSDK = 4 * kappa_S^(-2) / (1 + kappa_T)
 
 # Spatio-temporal diffusion parameter
-kappa_ST = -0.5 * kappa_T
+kappa_ST = -1 * kappa_T
 # If kappa_ST > 0, then negative values at release point for transformed point-mass
 # If kappa_ST < -kappa_T, then negative values at boundaries for transformed point-mass
 
@@ -107,6 +108,10 @@ colSums(d0_gt)
 # Check for volume in STDL transform ... should decay at rho_T
 colSums(d1_gt)
 
+# Squared resolution ... defined by cutoff in mesh
+Mean_z = apply(coords_gz, MARGIN=2, FUN=weighted.mean, w=d0_gt[,1])
+SR = weighted.mean( rowSums(sweep(coords_gz, MARGIN = 2, FUN = "-", STATS = Mean_z)^2), w=d0_gt[,1] )
+
 # Calculate centroid ... shouldn't change given diffusion
 # And calculate diffusion ~propto~ MSD
 Mean_tz = array(NA, dim = c(n_t,2), dimnames = list(time = seq_len(n_t),coord = c("mean_X","mean_Y")) )
@@ -116,6 +121,7 @@ for(t in seq_len(n_t) ){
   MSD_t[t] = weighted.mean( rowSums(sweep(coords_gz, MARGIN = 2, FUN = "-", STATS = Mean_tz[t,])^2), w=d1_gt[,t] )
 }
 cbind( Mean_tz, MSD = MSD_t )
+# MSD_pred = SR + MSDK + (1 + kappa_ST/kappa_T) * MSDK * (seq_len(n_t)-1)
 
 # Check for negative values ... shouldn't be any if -kappaT < kappa_ST < 0
 apply( d1_gt, MARGIN = 2, FUN = min )
