@@ -2,3 +2,9 @@
 .Rhistory
 .RData
 .Ruserdata
+*.RDS
+*.rds
+*.o
+*.so
+
+spacetime-lag.Rproj
