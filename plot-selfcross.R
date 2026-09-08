@@ -124,7 +124,7 @@ rmsd <- pdathat |>
 pdathat <- pdathat |> 
   tidylog::left_join(rmsd, by = c("iter", "type", "species")) |> 
   mutate(shape_value = ifelse(RMSD < 1 & par_name %in% c("log_kappaS", "RMSD"),
-                              "RMSD<1", "RMSD>1"),
+                              "RMSDK<1", "RMSDK>1"),
          shape_value = replace_na(shape_value, "RMSD>1"))
 
 
@@ -167,7 +167,8 @@ p1 <- pdathat |>
                  "kappaT_capelin" = "kappa[T]",
                  "kappaT_pacific halibut" = "kappa[T]",
                  #"RMSD_capelin" = "atop(Root-mean~squared, displacement~(km))",
-                 "RMSD_capelin" = "Root*'\u2013'*mean*'\u2013'*squared~displacement~(km)",
+                 #"RMSD_capelin" = "Root*'\u2013'*mean*'\u2013'*squared~displacement~(km)",
+                 "RMSD_capelin" = "RMSDK",
                  "AR(1)_capelin" = "rho[t]",
                  "AR(1)_pacific halibut" = "rho[t]"),
                default = label_parsed
