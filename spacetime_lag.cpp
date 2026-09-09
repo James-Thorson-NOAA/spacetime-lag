@@ -116,13 +116,13 @@ Type objective_function<Type>::operator() ()
   P_s2s2 = -1 * invM0_s2s2 * M1_s2s2;
   //P_kk.coeffRef( 0, 0 ) = 0;
   if( log_kappaS.size() > 0 ){
-    P_k2k2 = P_k2k2 + exp(-2 * log_kappaS(0) ) * kronecker( I_tt, P_s2s2 );
+    P_k2k2 = P_k2k2 + exp(-2 * log_kappaS(0) ) * tmbutils::kronecker( I_tt, P_s2s2 );
   }
   if( kappaT.size() > 0 ){
-    P_k2k2 = P_k2k2 + kappaT(0) * kronecker( M_tt, I_s2s2 );
+    P_k2k2 = P_k2k2 + kappaT(0) * tmbutils::kronecker( M_tt, I_s2s2 );
   }
   if( kappaST.size() > 0 ){
-    P_k2k2 = P_k2k2 + kappaST(0) * exp(-2 * log_kappaS(0) ) * kronecker( M_tt, P_s2s2 );
+    P_k2k2 = P_k2k2 + kappaST(0) * exp(-2 * log_kappaS(0) ) * tmbutils::kronecker( M_tt, P_s2s2 );
   }
   
   // Solve and repack
