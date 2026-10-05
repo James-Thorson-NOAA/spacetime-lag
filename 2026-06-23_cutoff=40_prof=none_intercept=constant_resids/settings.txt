@@ -24,7 +24,7 @@ $config_set
 4     1    1         0         1
 
 $version
-[1] "spacetime_lag_2026_06_23"
+[1] "spacetime_lag"
 
 $hesscompress
 [1] FALSE

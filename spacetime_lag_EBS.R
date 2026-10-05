@@ -5,7 +5,7 @@
 ##############
 
 # Working directory on JT machine
-# setwd( R'(C:\Users\James.Thorson\Desktop\Git\spacetime-lag)' )
+# setwd( R'(C:\Users\jtuth\Documents\GitHub\spacetime-lag)' )
 
 root_dir <- here::here()
 data_dir = file.path( root_dir, "surveyjoin_data" )
@@ -69,7 +69,7 @@ if( !("settings.RDS" %in% list.files(date_dir)) ){
 }
 
 # survey domain from VAST
-survey_domain <- st_read( file.path(R'(C:\Users\James.Thorson\Desktop\Git\VAST\inst\region_shapefiles\EBSshelf)', "EBSshelf.shp") )
+survey_domain <- st_read( file.path(root_dir, 'EBSshelf', "EBSshelf.shp") )
 survey_domain <- st_transform(survey_domain, crs = "+proj=utm +zone=2 +datum=WGS84 +units=km") # st_crs(data_sf))
 
 #
@@ -468,7 +468,7 @@ buffer = \(..., extra = 0.05){
   out = mid + (1+extra) * (out-mid)
   return(out)
 }
-png( file = file.path(date_dir,"summary.png"), width = 1.1 * length(species_set), height = 1.5 * 3, res = 200, units = "in" )
+png( file = file.path(date_dir,"Fig_2.png"), width = 1.1 * length(species_set), height = 1.5 * 3, res = 600, units = "in" )
   par( mfcol = c(3,length(species_set)), mgp = c(2,0.5,0), tck = -0.02, mar = c(0.5,0.5,0.5,0.5), oma = c(3,5,3,0), yaxs = "i", xaxs = "i" )
   ylim2 = buffer( results_scz[,,"rhoT"] - 1.96 * results_scz[,,"se_rhoT"], results_scz[,,"rhoT"] + 1.96 *results_scz[,,"se_rhoT"], extra = 0.2 )
   #ylim3 = buffer( results_scz[,,"RMSD"], extra = 0.2 )
@@ -510,7 +510,7 @@ png( file = file.path(date_dir,"summary.png"), width = 1.1 * length(species_set)
 dev.off()
 
 # Marginal responses
-png( file = file.path(date_dir,"marginal_response.png"), width = 2 * 2, height = 2 * 3, res = 200, units = "in" )
+png( file = file.path(date_dir,"marginal_response.png"), width = 2 * 2, height = 2 * 3, res = 600, units = "in" )
   par( mfrow = c(3,2), mgp = c(2,0.5,0), tck = -0.02, mar = c(2,2,1,1), yaxs = "i", xaxs = "i", oma = c(2,2,0,0) )
   for( si in seq_along(species_set) ){
     #
@@ -539,7 +539,7 @@ if( covariate == "anomaly" ){
   dimnames(Temp_gt) = list( NULL, year = year_set )
   maxval = max( abs(Temp_gt) )
   pal <- colorRampPalette(c("blue", "white", "red"))
-  png( file = file.path(date_dir,"Temp_gt.png"), width = 10, height = 10, res = 200, units = "in")
+  png( file = file.path(date_dir,"Fig_1.png"), width = 10, height = 10, res = 600, units = "in")
     par( mfrow = c(7,7), oma = c(3,3,0,0) )
     plot_grid = st_sf( grid, as.matrix(Temp_gt) )
     for( t in seq_len(ncol(Temp_gt)) ){
@@ -562,7 +562,7 @@ xlim = 650 + c(-1,1) * 200
 ylim = 6500 + c(-1,1) * 200
 MSD_sz = array( NA, dim = c(length(species_set),4) )
 pred_s = rep( NA, length(species_set) )
-png( file = file.path(date_dir,"point_diffusion.png"), width = 2 * 4, height = 2 * 6, res = 200, units = "in" )
+png( file = file.path(date_dir,"Fig_3.png"), width = 2 * 4, height = 2 * 6, res = 600, units = "in" )
   par( mfrow = c(length(species_set),4), mgp = c(2,0.5,0), tck = -0.02, yaxs = "i", xaxs = "i", oma = c(1,2,3,1) )
   for( si in seq_along(species_set) ){
     # 
@@ -649,7 +649,7 @@ for( ci in seq_len(nrow(config_set)) ){
     T_scgt[si,ci,,] = T_gt
 
     # Not necessary to do each individual plot
-    #png( file = file.path(run_dir,"gamma_gt.png"), width = 10, height = 10, res = 200, units = "in")
+    #png( file = file.path(run_dir,"gamma_gt.png"), width = 10, height = 10, res = 600, units = "in")
     #  plot_grid = st_sf( grid, as.matrix(gamma_gt) )
     #  plot(plot_grid, border = NA) # , zlim = range(cbind(gamma_gt,T_gt)) )
     #dev.off()
@@ -659,7 +659,7 @@ for( ci in seq_len(nrow(config_set)) ){
 # Plot single year across models
 which_year = "2014"
 for( zi in 1:2 ){
-  png( file = file.path(date_dir,paste0("compare_",which_year,"_",c("gamma","T")[zi],".png")), width = 2*nrow(config_set), height = 2*length(species_set), res = 200, units = "in")
+  png( file = file.path(date_dir,paste0("compare_",which_year,"_",c("gamma","T")[zi],".png")), width = 2*nrow(config_set), height = 2*length(species_set), res = 600, units = "in")
     par( mfrow = c(length(species_set),nrow(config_set)), oma = c(0,3,2,0) )
     for( si in seq_along(species_set) ){
     for( ci in seq_len(nrow(config_set)) ){
@@ -700,7 +700,9 @@ for( zi in 1:2 ){
 which_years = as.character(2013:2017)
 #which_years = as.character(2012:2016)
 for( zi in 1:2 ){
-  png( file = file.path(date_dir,paste0("compare_",min(which_years),"-",max(which_years),"_",c("gamma","T")[zi],".png")), width = 2*length(which_years), height = 2*length(species_set), res = 200, units = "in")
+  if(zi == 1) filename = paste0("compare_",min(which_years),"-",max(which_years),"_",c("gamma","T")[zi],".png")
+  if(zi == 2) filename = paste0("Fig_4.png")
+  png( file = file.path(date_dir,filename), width = 2*length(which_years), height = 2*length(species_set), res = 600, units = "in")
     par( mfrow = c(length(species_set),length(which_years)), oma = c(0,3,2,0) )
     for( si in seq_along(species_set) ){
     for( ti in seq_along(which_years) ){
@@ -763,7 +765,7 @@ if( FALSE ){
       colnames(Temp_gt) = colnames(T_gt) = year_set
       mean( apply(T_gt, MARGIN=1, FUN = sd) )
       mean( apply(Temp_gt, MARGIN=1, FUN = sd) )
-      png( file = file.path(run_dir,"T_gt.png"), width = 10, height = 10, res = 200, units = "in")
+      png( file = file.path(run_dir,"T_gt.png"), width = 10, height = 10, res = 600, units = "in")
         plot_grid = st_sf( grid, T_gt )
         plot(plot_grid, border = NA ) # , zlim = range(cbind(Temp_gt,T_gt)) )
       dev.off()
@@ -798,7 +800,7 @@ for( si in seq_along(species_set) ){
     }
   }
 }
-png( file = file.path(date_dir,"quantile_residuals.png"), width = 2*nrow(config_set), height = 2*length(species_set), res = 200, units = "in")
+png( file = file.path(date_dir,"quantile_residuals.png"), width = 2*nrow(config_set), height = 2*length(species_set), res = 600, units = "in")
   par( mfrow = c(length(species_set),nrow(config_set)), oma = c(2,3,2,2), mar = c(1,1,0,0), mgp = c(2,0.5,0), tck = -0.02, xaxs = "i", yaxs = "i" )
   for( si in seq_along(species_set) ){
   for( ci in seq_len(nrow(config_set)) ){
